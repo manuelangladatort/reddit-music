@@ -2,6 +2,13 @@ import json
 import csv
 from pathlib import Path
 
+# Global parameters
+# INPUT_FILENAME = "lets_talk_music_data/LetsTalkMusic_new_n943.json"
+# OUTPUT_FILENAME = "lets_talk_music_data/LetsTalkMusic_new_n943.csv"
+
+INPUT_FILENAME = "lets_talk_music_data/LetsTalkMusic_hot_n482.json"
+OUTPUT_FILENAME = "lets_talk_music_data/LetsTalkMusic_hot_n482.csv"
+
 def convert_json_to_csv(json_file, csv_file):
     """
     Convert JSON data to CSV format.
@@ -29,8 +36,8 @@ def convert_json_to_csv(json_file, csv_file):
 
 if __name__ == "__main__":
     # Define input and output file paths
-    json_file = "lets_talk_music_data/LetsTalkMusic_new.json"
-    csv_file = "lets_talk_music_data/LetsTalkMusic_new.csv"
+    json_file = INPUT_FILENAME
+    csv_file = OUTPUT_FILENAME
     
     # Create output directory if it doesn't exist
     Path(csv_file).parent.mkdir(parents=True, exist_ok=True)

@@ -9,8 +9,11 @@ YOUR_CLIENT_ID = "Iny6ZNxNXNFXuvS0OAtL3Q"
 YOUR_CLIENT_SECRET = "N5qmBqY3Syln6qIoE9efDsyL6X34EA"
 USERNAME = "One-Author7372 "
 
+# Global parameters
+SUBREDDIT = "LetsTalkMusic"
+OUTPUT_DIR = "lets_talk_music_data"
 
-NUMBER_OF_POSTS = 100 # use None to download all posts
+NUMBER_OF_POSTS = 10000 # use None to download all posts
 
 # Configure logging
 logging.basicConfig(
@@ -68,7 +71,10 @@ def download_subreddit_posts(
         
         # Download posts
         posts_data = []
-        for post in posts:
+        total_posts = NUMBER_OF_POSTS if NUMBER_OF_POSTS is not None else "all"
+        logging.info(f"Starting to process {total_posts} posts...")
+        
+        for i, post in enumerate(posts, 1):
             post_data = {
                 "id": post.id,
                 "title": post.title,
@@ -80,6 +86,11 @@ def download_subreddit_posts(
                 "num_comments": post.num_comments
             }
             posts_data.append(post_data)
+            
+            # Log progress every 100 posts
+            if i % 100 == 0:
+                logging.info(f"Processed {i} posts out of {total_posts}")
+            
             time.sleep(rate_limit_delay)  # Rate limiting
         
         # Save data
@@ -98,16 +109,13 @@ def download_subreddit_posts(
 
 if __name__ == "__main__":
     # Configuration
-    SUBREDDIT = "LetsTalkMusic"
-    OUTPUT_DIR = "lets_talk_music_data"
-    
     try:
         download_subreddit_posts(
             subreddit=SUBREDDIT,
             output_dir=OUTPUT_DIR,
-            sort_by="new",
+            sort_by="hot",
             download_type="json",
-            rate_limit_delay=2
+            rate_limit_delay=3
         )
     except Exception as e:
         logging.error(f"Failed to download posts: {str(e)}")
