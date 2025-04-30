@@ -3,17 +3,16 @@ import time
 import json
 from pathlib import Path
 import praw
+from datetime import datetime, timezone
 
-# API details
-YOUR_CLIENT_ID = "Iny6ZNxNXNFXuvS0OAtL3Q"
-YOUR_CLIENT_SECRET = "N5qmBqY3Syln6qIoE9efDsyL6X34EA"
-USERNAME = "One-Author7372 "
+# API details (replace with keys)
+YOUR_CLIENT_ID = "key"
+YOUR_CLIENT_SECRET = "key"
+USERNAME = "username"
 
 # Global parameters
 SUBREDDIT = "LetsTalkMusic"
 OUTPUT_DIR = "lets_talk_music_data"
-
-NUMBER_OF_POSTS = 10000 # use None to download all posts
 
 # Configure logging
 logging.basicConfig(
@@ -30,7 +29,8 @@ def download_subreddit_posts(
     output_dir: str = "reddit_data",
     sort_by: str = "new",
     download_type: str = "json",
-    rate_limit_delay: int = 2
+    rate_limit_delay: int = 2,
+    start_timestamp: int = None
 ) -> None:
     """
     Download posts from a specified subreddit with rate limiting and error handling.
@@ -41,6 +41,7 @@ def download_subreddit_posts(
         sort_by (str): How to sort the posts ('new', 'top', 'hot', etc.)
         download_type (str): Type of data to download ('json', 'csv', etc.)
         rate_limit_delay (int): Delay between requests in seconds
+        start_timestamp (int): Unix timestamp to start downloading from
     """
     try:
         # Create output directory if it doesn't exist
@@ -61,20 +62,24 @@ def download_subreddit_posts(
         
         # Get posts based on sort method
         if sort_by == "new":
-            posts = subreddit_instance.new(limit=NUMBER_OF_POSTS)
+            posts = subreddit_instance.new(limit=None)  # None means get all available posts
         elif sort_by == "top":
-            posts = subreddit_instance.top(limit=NUMBER_OF_POSTS)
+            posts = subreddit_instance.top(limit=None)
         elif sort_by == "hot":
-            posts = subreddit_instance.hot(limit=NUMBER_OF_POSTS)
+            posts = subreddit_instance.hot(limit=None)
         else:
             raise ValueError(f"Invalid sort method: {sort_by}")
         
         # Download posts
         posts_data = []
-        total_posts = NUMBER_OF_POSTS if NUMBER_OF_POSTS is not None else "all"
-        logging.info(f"Starting to process {total_posts} posts...")
+        post_count = 0
+        logging.info("Starting to process posts...")
         
-        for i, post in enumerate(posts, 1):
+        for post in posts:
+            # Skip posts before start_timestamp if specified
+            if start_timestamp and post.created_utc < start_timestamp:
+                continue
+                
             post_data = {
                 "id": post.id,
                 "title": post.title,
@@ -86,10 +91,11 @@ def download_subreddit_posts(
                 "num_comments": post.num_comments
             }
             posts_data.append(post_data)
+            post_count += 1
             
             # Log progress every 100 posts
-            if i % 100 == 0:
-                logging.info(f"Processed {i} posts out of {total_posts}")
+            if post_count % 100 == 0:
+                logging.info(f"Processed {post_count} posts")
             
             time.sleep(rate_limit_delay)  # Rate limiting
         
@@ -110,12 +116,16 @@ def download_subreddit_posts(
 if __name__ == "__main__":
     # Configuration
     try:
+        # Set start timestamp to January 1, 2011
+        start_timestamp = int(datetime(2015, 1, 1, tzinfo=timezone.utc).timestamp())
+        
         download_subreddit_posts(
             subreddit=SUBREDDIT,
             output_dir=OUTPUT_DIR,
-            sort_by="hot",
+            sort_by="new",  
             download_type="json",
-            rate_limit_delay=3
+            rate_limit_delay=2,
+            start_timestamp=start_timestamp
         )
     except Exception as e:
         logging.error(f"Failed to download posts: {str(e)}")
